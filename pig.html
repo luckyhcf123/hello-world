@@ -117,6 +117,44 @@
             0% { transform: translateY(110vh) rotate(0deg); }
             100% { transform: translateY(-10vh) rotate(360deg); }
         }
+
+        /* 猪吃汉堡动画样式 */
+        .eating-pig {
+            position: absolute;
+            font-size: 120px;
+            z-index: 100;
+            pointer-events: none;
+            transition: all 0.8s cubic-bezier(0.5, 0, 0.5, 1);
+        }
+
+        .hamburger {
+            position: absolute;
+            font-size: 80px;
+            z-index: 90;
+            pointer-events: none;
+            transform: translate(-50%, -50%) scale(0);
+            transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .hamburger.show {
+            transform: translate(-50%, -50%) scale(1);
+        }
+
+        .yum-text {
+            position: absolute;
+            color: #ff4d94;
+            font-weight: bold;
+            font-size: 24px;
+            pointer-events: none;
+            z-index: 101;
+            animation: fadeUp 1s forwards;
+        }
+
+        @keyframes fadeUp {
+            0% { opacity: 0; transform: translateY(0); }
+            50% { opacity: 1; }
+            100% { opacity: 0; transform: translateY(-50px); }
+        }
     </style>
 </head>
 <body>
@@ -135,6 +173,7 @@
     const startBtn = document.getElementById('startBtn');
     const container = document.getElementById('container');
     const body = document.body;
+    let isStarted = false;
 
     function createFloatingPig() {
         const pig = document.createElement('div');
@@ -147,15 +186,90 @@
         setTimeout(() => pig.remove(), duration * 1000);
     }
 
+    // 猪吃汉堡动画
+    function triggerEatingAnimation(e) {
+        if (!isStarted) return;
+        
+        const x = e.clientX;
+        const y = e.clientY;
+
+        // 1. 创建大汉堡
+        const burger = document.createElement('div');
+        burger.className = 'hamburger';
+        burger.innerText = '🍔';
+        burger.style.left = x + 'px';
+        burger.style.top = y + 'px';
+        body.appendChild(burger);
+        
+        // 小延迟后显示汉堡
+        setTimeout(() => burger.classList.add('show'), 10);
+
+        // 2. 创建大猪
+        const eatingPig = document.createElement('div');
+        eatingPig.className = 'eating-pig';
+        eatingPig.innerText = '🐷';
+        
+        // 随机从左侧或右侧出现
+        const fromLeft = Math.random() > 0.5;
+        eatingPig.style.top = (y - 60) + 'px';
+        if (fromLeft) {
+            eatingPig.style.left = '-150px';
+        } else {
+            eatingPig.style.left = (window.innerWidth + 50) + 'px';
+        }
+        
+        body.appendChild(eatingPig);
+
+        // 3. 猪冲向汉堡
+        setTimeout(() => {
+            eatingPig.style.left = (x - 60) + 'px';
+            
+            // 4. 到达汉堡位置时“吃掉”
+            setTimeout(() => {
+                burger.style.transform = 'translate(-50%, -50%) scale(0)';
+                eatingPig.innerText = '😋'; // 变成满足的表情
+                
+                // 显示“好吃！”文字
+                const yum = document.createElement('div');
+                yum.className = 'yum-text';
+                yum.innerText = '真好吃！Yum!';
+                yum.style.left = x + 'px';
+                yum.style.top = (y - 80) + 'px';
+                body.appendChild(yum);
+                
+                // 5. 猪离开
+                setTimeout(() => {
+                    if (fromLeft) {
+                        eatingPig.style.left = (window.innerWidth + 150) + 'px';
+                    } else {
+                        eatingPig.style.left = '-200px';
+                    }
+                    
+                    // 6. 清理元素
+                    setTimeout(() => {
+                        burger.remove();
+                        eatingPig.remove();
+                        yum.remove();
+                    }, 800);
+                }, 500);
+            }, 800);
+        }, 50);
+    }
+
     startBtn.addEventListener('click', () => {
+        isStarted = true;
         startBtn.style.display = 'none';
         container.classList.add('show');
         
         // 持续产生背景小猪
         setInterval(createFloatingPig, 1000);
         for(let i=0; i<10; i++) setTimeout(createFloatingPig, i * 200);
+
+        // 添加点击监听
+        body.addEventListener('mousedown', triggerEatingAnimation);
     });
 </script>
+
 
 </body>
 </html>
